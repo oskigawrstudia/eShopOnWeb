@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  id-token: write
   contents: read
   packages: write
 
@@ -45,3 +46,20 @@ jobs:
           tags: |
             ghcr.io/oskigawrstudia/eshoponweb:latest
             ghcr.io/oskigawrstudia/eshoponweb:${{ github.sha }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Container Apps
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az extension add --name containerapp --upgrade
+            az containerapp update \
+              --name eshoponweb \
+              --resource-group rg-eshoponweb \
+              --image ghcr.io/oskigawrstudia/eshoponweb:${{ github.sha }}
